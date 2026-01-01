@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ConfigPage from "./ConfigPage";
 import { fetchDashboardConfig, saveDashboardConfig, fetchIcalEvents } from "./api";
 import { fetchVersion } from "./versionApi";
@@ -26,6 +26,8 @@ export default function App() {
   const [error, setError] = useState("");
   const [icalEvents, setIcalEvents] = useState(Array(7).fill([]));
   const [version, setVersion] = useState("");
+  const [notes, setNotes] = useState("");
+  const notesSaveTimeout = useRef(null);
     // Version beim Start laden
     useEffect(() => {
       fetchVersion().then(setVersion);
@@ -43,6 +45,11 @@ export default function App() {
         if (!stopped) {
           setConfig(cfg);
           setTodos(cfg.todos);
+          // Nur beim allerersten Laden die Notizen setzen!
+          // Danach verwaltest du sie nur noch lokal über das Textfeld.
+          if (loading) {
+            setNotes(cfg.notes || "");
+          }
           setLoading(false);
         }
         // iCal-Termine laden
@@ -70,9 +77,56 @@ export default function App() {
     return () => { stopped = true; };
   }, [refreshInterval]);
 
+  const hasInitialLoaded = useRef(false);
+  const lastServerNotes = useRef("");
   useEffect(() => {
-    if (config) setTodos(config.todos);
+    if (config) {
+      setTodos(config.todos);
+      
+      // Prüfe: Hat der Server einen ANDEREN Text als beim letzten Refresh?
+      // UND: Ist dieser Server-Text anders als das, was ich gerade im Feld stehen habe?
+      const serverNotes = config.notes || "";
+      
+      if (serverNotes !== lastServerNotes.current) {
+        // Der Text auf dem Server hat sich seit dem letzten Laden geändert (z.B. durch PC B)
+        setNotes(serverNotes);
+        lastServerNotes.current = serverNotes;
+      }
+    }
   }, [config]);
+
+
+  // Auto-save notes when changed (debounced)
+  useEffect(() => {
+    // 1. Nichts tun, wenn config noch nicht geladen ist
+    if (!config) return;
+
+    // 2. Nichts tun, wenn der Text im Feld exakt dem entspricht, was wir zuletzt vom Server wissen
+    if (notes === lastServerNotes.current) return;
+
+    // 3. Bestehenden Timer löschen (Debounce)
+    if (notesSaveTimeout.current) {
+      clearTimeout(notesSaveTimeout.current);
+    }
+
+    // 4. Neuen Timer setzen
+    notesSaveTimeout.current = setTimeout(async () => {
+      try {
+        const updatedConfig = { ...config, notes };
+        await saveDashboardConfig(updatedConfig);
+        
+        // WICHTIG: Nach dem Speichern merken wir uns diesen Stand als "aktuellen Server-Stand"
+        lastServerNotes.current = notes;
+        setConfig(updatedConfig); 
+      } catch (e) {
+        console.error("Fehler beim Speichern der Notizen", e);
+      }
+    }, 1000); // 1 Sekunde warten nach dem letzten Tastendruck
+
+    return () => {
+      if (notesSaveTimeout.current) clearTimeout(notesSaveTimeout.current);
+    };
+  }, [notes, config]);
 
 
   async function handleSave(newConfig) {
@@ -234,8 +288,8 @@ export default function App() {
               </table>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>🍽 Essensplan</h2>
               <div className="overflow-x-auto card">
                 <table className="min-w-full border text-sm">
@@ -262,7 +316,7 @@ export default function App() {
                 </table>
               </div>
             </div>
-            <div>
+            <div className="md:col-span-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>✅ To-dos</h2>
               <ul className="card">
                 {todos.map((t, i) => (
@@ -277,6 +331,17 @@ export default function App() {
                   </li>
                 ))}
               </ul>
+            </div>
+            <div className="md:col-span-1">
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>📝 Notizen</h2>
+              <textarea
+                className="w-full h-48 card p-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 resize-vertical"
+                placeholder="Notizen hier eingeben..."
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                style={{ minHeight: 120, background: 'var(--bg-main)', color: 'var(--text-main)' }}
+              />
+              <div className="text-xs text-gray-400 mt-1">Wird automatisch gespeichert</div>
             </div>
           </div>
         </div>
