@@ -74,50 +74,49 @@ export default function ConfigPage({ onSave, config, isAuthenticated, onLogin, o
       const meal = localConfig.mealplan && localConfig.mealplan[dayIdx] ? localConfig.mealplan[dayIdx][mealIdx] : { name: "", link: "" };
       const val = typeof meal === "string" ? { name: meal, link: "" } : meal;
       return (
-              <>
-                <div className="mb-4">
-                  <button className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600" onClick={() => openBirthdayPopup()}>Geburtstage</button>
-                  {localConfig.birthdays.length > 0 && (
-                    <div className="mt-2">
-                      <div className="font-semibold mb-1">Alle Geburtstage:</div>
-                      <ul>
-                        {localConfig.birthdays.map((b, i) => (
-                          <li key={i} className="flex gap-2 items-center mb-1">
-                            <span>{b.name} ({b.date})</span>
-                            <button className="text-accent px-2" onClick={() => openBirthdayPopup(i)}>Bearbeiten</button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                {renderBirthdayPopup()}
-              </>
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
-          <div
-            className="p-6 rounded shadow-lg min-w-[300px]"
-            style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
-          >
-            <h3 className="font-bold mb-2" style={{ color: 'var(--accent)' }}>
-              Rezept für {days[dayIdx]}, {meals[mealIdx]}
-            </h3>
-            <label className="block mb-1">Name:</label>
-            <input
-              className="border p-1 w-full mb-2"
-              value={val.name}
-              onChange={e => handleMealplanObjChange(dayIdx, mealIdx, "name", e.target.value)}
-              placeholder="Gericht"
+        <>
+          <div className="mb-4">
+            <button className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600" onClick={() => openBirthdayPopup()}>Geburtstage</button>
+            {localConfig.birthdays.length > 0 && (
+              <div className="mt-2">
+                <div className="font-semibold mb-1">Alle Geburtstage:</div>
+                <ul>
+                  {localConfig.birthdays.map((b, i) => (
+                    <li key={i} className="flex gap-2 items-center mb-1">
+                      <span>{b.name} ({b.date})</span>
+                      <button className="text-accent px-2" onClick={() => openBirthdayPopup(i)}>Bearbeiten</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          {renderBirthdayPopup()}
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+            <div
+              className="p-6 rounded shadow-lg min-w-[300px]"
               style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
-            />
-            <label className="block mb-1">Rezept-Link:</label>
-            <input
-              className="border p-1 w-full mb-2"
-              value={val.link}
-              onChange={e => handleMealplanObjChange(dayIdx, mealIdx, "link", e.target.value)}
-              placeholder="https://..."
-              style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
-            />
-            <div className="flex justify-end gap-2 mt-2">
+            >
+              <h3 className="font-bold mb-2" style={{ color: 'var(--accent)' }}>
+                Rezept für {days[dayIdx]}, {meals[mealIdx]}
+              </h3>
+              <label className="block mb-1">Name:</label>
+              <input
+                className="border p-1 w-full mb-2"
+                value={val.name}
+                onChange={e => handleMealplanObjChange(dayIdx, mealIdx, "name", e.target.value)}
+                placeholder="Gericht"
+                style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
+              />
+              <label className="block mb-1">Rezept-Link:</label>
+              <input
+                className="border p-1 w-full mb-2"
+                value={val.link}
+                onChange={e => handleMealplanObjChange(dayIdx, mealIdx, "link", e.target.value)}
+                placeholder="https://..."
+                style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
+              />
+              <div className="flex justify-end gap-2 mt-2">
               <button className="px-3 py-1 rounded" style={{ background: 'var(--accent2)', color: 'var(--accent)' }} onClick={handleMealplanEditClose}>Schließen</button>
             </div>
           </div>
