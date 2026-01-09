@@ -74,7 +74,6 @@ export default function ConfigPage({ onSave, config, isAuthenticated, onLogin, o
       const meal = localConfig.mealplan && localConfig.mealplan[dayIdx] ? localConfig.mealplan[dayIdx][mealIdx] : { name: "", link: "" };
       const val = typeof meal === "string" ? { name: meal, link: "" } : meal;
       return (
-              {/* Geburtstage Button */}
               <div className="mb-4">
                 <button className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-600" onClick={() => openBirthdayPopup()}>Geburtstage</button>
                 {localConfig.birthdays.length > 0 && (
