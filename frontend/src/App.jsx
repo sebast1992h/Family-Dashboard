@@ -234,7 +234,7 @@ export default function App() {
                   <tr>
                     <th className="border p-1"> </th>
                     {days.map((day, i) => (
-                      <th key={i} className="border p-1" style={i === todayDayIdx ? { background: '#4a90d9', color: '#fff', fontWeight: 'bold' } : {}}>{day}</th>
+                      <th key={i} className="border p-1" style={i === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.25)', fontWeight: 'bold' } : {}}>{day}</th>
                     ))}
                   </tr>
                   <tr>
@@ -252,7 +252,7 @@ export default function App() {
                       return days.map((_, i) => {
                         const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
                         const dayStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        return <th key={i} className="border p-1 text-xs" style={i === todayDayIdx ? { background: '#4a90d9', color: '#fff' } : { color: '#888' }}>{dayStr}</th>;
+                        return <th key={i} className="border p-1 text-xs" style={i === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.25)' } : { color: '#888' }}>{dayStr}</th>;
                       });
                     })()}
                   </tr>
@@ -262,7 +262,7 @@ export default function App() {
                     <tr key={mIdx}>
                       <td className="border p-1 font-semibold">{member}</td>
                       {days.map((_, dIdx) => (
-                        <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.1)' } : {}}>
+                        <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.08)' } : {}}>
                           <div className="flex flex-wrap gap-1 mb-1">
                             {config.standardItemPersonPlan && config.standardItemPersonPlan[dIdx] && config.standardItemPersonPlan[dIdx][mIdx] && config.standardItemPersonPlan[dIdx][mIdx].map(itemIdx => {
                               const item = config.standardItems && config.standardItems[itemIdx];
@@ -297,7 +297,7 @@ export default function App() {
                   <tr>
                     <td className="border p-1 font-semibold">Kalender</td>
                     {days.map((_, dIdx) => (
-                      <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.1)' } : {}}>
+                      <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(74, 144, 217, 0.08)' } : {}}>
                         {icalEvents[dIdx] && icalEvents[dIdx]["Kalender"] && icalEvents[dIdx]["Kalender"].length > 0 && (
                           <div>
                             {icalEvents[dIdx]["Kalender"].map((ev, i) => (
