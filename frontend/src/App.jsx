@@ -202,8 +202,8 @@ export default function App() {
           <div className="flex items-center gap-4">
             <span className="font-bold text-xl">Family Dashboard</span>
             {todaysBirthdays.length > 0 && (
-              <div className="ml-4 px-6 py-3 rounded text-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-main)' }}>
-                🎂 Heute hat Geburtstag: {todaysBirthdays.map(b => b.name).join(', ')}
+              <div className="ml-4 px-8 py-3 rounded text-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-main)' }}>
+                🎂 Heute hat Geburtstag: {todaysBirthdays.map(b => b.name).join(', ')} 🎉
               </div>
             )}
           </div>
