@@ -205,6 +205,12 @@ export default function App() {
     });
   }
 
+  // Aktueller Wochentag-Index (0=Mo, 1=Di, ..., 6=So)
+  const todayDayIdx = (() => {
+    const dayOfWeek = new Date().getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  })();
+
   return (
     <>
       <div className="min-h-screen" style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}>
@@ -223,12 +229,12 @@ export default function App() {
           <div>
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>🗓 Termine</h2>
             <div className="overflow-x-auto mb-6 card">
-              <table className="min-w-full border text-sm">
+              <table className="min-w-full border text-base">
                 <thead>
                   <tr>
                     <th className="border p-1"> </th>
                     {days.map((day, i) => (
-                      <th key={i} className="border p-1">{day}</th>
+                      <th key={i} className="border p-1" style={i === todayDayIdx ? { background: 'var(--accent)', color: 'var(--bg-main)' } : {}}>{day}</th>
                     ))}
                   </tr>
                   <tr>
@@ -246,7 +252,7 @@ export default function App() {
                       return days.map((_, i) => {
                         const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
                         const dayStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        return <th key={i} className="border p-1 text-xs text-gray-500">{dayStr}</th>;
+                        return <th key={i} className="border p-1 text-xs" style={i === todayDayIdx ? { background: 'var(--accent)', color: 'var(--bg-main)' } : { color: '#888' }}>{dayStr}</th>;
                       });
                     })()}
                   </tr>
@@ -256,7 +262,7 @@ export default function App() {
                     <tr key={mIdx}>
                       <td className="border p-1 font-semibold">{member}</td>
                       {days.map((_, dIdx) => (
-                        <td className="border p-1" key={dIdx}>
+                        <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(var(--accent-rgb, 100, 149, 237), 0.15)' } : {}}>
                           <div className="flex flex-wrap gap-1 mb-1">
                             {config.standardItemPersonPlan && config.standardItemPersonPlan[dIdx] && config.standardItemPersonPlan[dIdx][mIdx] && config.standardItemPersonPlan[dIdx][mIdx].map(itemIdx => {
                               const item = config.standardItems && config.standardItems[itemIdx];
@@ -291,7 +297,7 @@ export default function App() {
                   <tr>
                     <td className="border p-1 font-semibold">Kalender</td>
                     {days.map((_, dIdx) => (
-                      <td className="border p-1" key={dIdx}>
+                      <td className="border p-1" key={dIdx} style={dIdx === todayDayIdx ? { background: 'rgba(var(--accent-rgb, 100, 149, 237), 0.15)' } : {}}>
                         {icalEvents[dIdx] && icalEvents[dIdx]["Kalender"] && icalEvents[dIdx]["Kalender"].length > 0 && (
                           <div>
                             {icalEvents[dIdx]["Kalender"].map((ev, i) => (
@@ -316,7 +322,7 @@ export default function App() {
             <div className="md:col-span-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>🍽 Essensplan</h2>
               <div className="overflow-x-auto card">
-                <table className="min-w-full border text-sm">
+                <table className="min-w-full border text-base">
                   <thead>
                     <tr>
                       <th className="border p-1"> </th>
@@ -350,7 +356,7 @@ export default function App() {
             </div>
             <div className="md:col-span-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>✅ To-dos</h2>
-              <ul className="card">
+              <ul className="card text-base">
                 {todos.map((t, i) => (
                   <li key={i} className="flex items-center gap-2 py-1">
                     <input
