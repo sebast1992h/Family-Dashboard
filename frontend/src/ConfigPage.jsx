@@ -141,22 +141,6 @@ export default function ConfigPage({ onSave, config, isAuthenticated, onLogin, o
     standardItemPersonPlan: Array(7).fill(0).map(() => []),
     refreshInterval: 15,
   });
-              {/* Auto-Refresh-Intervall */}
-              <div className="mb-4">
-                <label className="font-semibold block mb-2">Auto-Refresh-Intervall:</label>
-                <select
-                  className="border p-1 rounded"
-                  value={localConfig.refreshInterval ?? 15}
-                  onChange={e => setLocalConfig({ ...localConfig, refreshInterval: Number(e.target.value) })}
-                >
-                  <option value={0}>Aus</option>
-                  <option value={5}>5 Sekunden</option>
-                  <option value={10}>10 Sekunden</option>
-                  <option value={15}>15 Sekunden</option>
-                  <option value={30}>30 Sekunden</option>
-                  <option value={60}>60 Sekunden</option>
-                </select>
-              </div>
         {/* Auto-Refresh-Intervall */}
         <div className="mb-4">
           <label className="font-semibold block mb-2">Auto-Refresh-Intervall:</label>
