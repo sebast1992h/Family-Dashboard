@@ -118,10 +118,11 @@ export default function ConfigPage({ onSave, config, isAuthenticated, onLogin, o
                 style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}
               />
               <div className="flex justify-end gap-2 mt-2">
-              <button className="px-3 py-1 rounded" style={{ background: 'var(--accent2)', color: 'var(--accent)' }} onClick={handleMealplanEditClose}>Schließen</button>
+                <button className="px-3 py-1 rounded" style={{ background: 'var(--accent2)', color: 'var(--accent)' }} onClick={handleMealplanEditClose}>Schließen</button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       );
     }
   const [localConfig, setLocalConfig] = useState(config || {
