@@ -89,28 +89,31 @@ app.get("/api/calendar", async (req, res) => {
     const monday = new Date(nowBerlin.getFullYear(), nowBerlin.getMonth(), nowBerlin.getDate() + mondayOffset);
     monday.setHours(0,0,0,0);
     
+    // Hilfsfunktion: formatiert Zeit korrekt basierend auf Zeitzone
+    // Das ical-Package speichert bei TZID=Europe/Berlin die lokale Zeit als UTC-Wert
+    // Daher müssen wir bei solchen Events die Zeit direkt aus dem Date-Objekt nehmen
+    function formatTimeCorrect(d) {
+      if (!d) return null;
+      const date = d instanceof Date ? d : new Date(d);
+      
+      // Wenn das ical-Package eine Zeitzone gesetzt hat (z.B. Europe/Berlin)
+      // dann ist die Zeit im Date-Objekt bereits die lokale Zeit (als UTC gespeichert)
+      // Wir müssen sie daher direkt auslesen ohne Konvertierung
+      if (d && typeof d === 'object' && d.tz && d.tz !== 'UTC') {
+        const h = date.getUTCHours().toString().padStart(2, '0');
+        const m = date.getUTCMinutes().toString().padStart(2, '0');
+        return `${h}:${m}`;
+      }
+      
+      // Bei UTC-Events (kein tz oder tz=UTC) nach Europe/Berlin konvertieren
+      return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' });
+    }
+    
     for (const k in events) {
       const ev = events[k];
       if (ev.type === 'VEVENT' && ev.start) {
-        // ev.start kann ein Date-Objekt oder ein Objekt mit tz-Info sein
-        let startDate;
-        let startTimeStr;
-        
-        // Prüfe, ob ev.start ein Objekt mit tz-Property ist (ical-Paket)
-        if (ev.start && typeof ev.start === 'object' && ev.start.tz) {
-          // Termin hat explizite Zeitzone (z.B. Europe/Berlin)
-          // Die Zeit im Date-Objekt ist bereits in UTC konvertiert
-          startDate = new Date(ev.start);
-          startTimeStr = startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: ev.start.tz });
-        } else if (ev.start instanceof Date) {
-          // Prüfe ob es ein UTC-Termin ist (hat 'Z' im ursprünglichen Format)
-          // Bei UTC-Terminen: toLocaleTimeString mit Europe/Berlin
-          startDate = ev.start;
-          startTimeStr = startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' });
-        } else {
-          startDate = new Date(ev.start);
-          startTimeStr = startDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' });
-        }
+        let startDate = ev.start instanceof Date ? ev.start : new Date(ev.start);
+        let startTimeStr = formatTimeCorrect(ev.start);
         
         // Berechne den Tag in Europe/Berlin
         const startBerlin = new Date(startDate.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
@@ -119,15 +122,6 @@ app.get("/api/calendar", async (req, res) => {
         // Tag im Bereich der aktuellen Woche (Montag=0)
         const diff = Math.round((startBerlin - monday) / (1000*60*60*24));
         if (diff >= 0 && diff < 7) {
-          // Hilfsfunktion für End-Zeit
-          function formatEndTime(d) {
-            if (!d) return null;
-            if (d && typeof d === 'object' && d.tz) {
-              return new Date(d).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: d.tz });
-            }
-            return new Date(d).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' });
-          }
-          
           // Versuche, den Termin einem Familienmitglied zuzuordnen
           let matched = false;
           if (typeof ev.summary === 'string') {
@@ -138,7 +132,7 @@ app.get("/api/calendar", async (req, res) => {
                 days[diff][member].push({
                   summary: ev.summary.slice(prefix.length),
                   start: startTimeStr,
-                  end: formatEndTime(ev.end),
+                  end: formatTimeCorrect(ev.end),
                   location: ev.location || ""
                 });
                 matched = true;
@@ -151,7 +145,7 @@ app.get("/api/calendar", async (req, res) => {
             days[diff]["Kalender"].push({
               summary: ev.summary,
               start: startTimeStr,
-              end: formatEndTime(ev.end),
+              end: formatTimeCorrect(ev.end),
               location: ev.location || ""
             });
           }
