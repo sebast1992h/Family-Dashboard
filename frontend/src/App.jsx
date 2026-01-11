@@ -312,7 +312,7 @@ export default function App() {
                                   <span className="inline-block">📅</span>
                                   <span>{ev.summary}</span>
                                   {ev.start && (
-                                    <span className="ml-1 text-gray-500">{new Date(ev.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                    <span className="ml-1 text-gray-500">{new Date(ev.start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' })}</span>
                                   )}
                                 </div>
                               ))}
