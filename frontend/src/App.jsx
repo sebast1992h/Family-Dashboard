@@ -181,7 +181,20 @@ export default function App() {
   }
 
   async function handleTodoToggle(idx) {
-    const newTodos = todos.map((todo, i) => i === idx ? { ...todo, done: !todo.done } : todo);
+    const now = new Date().toISOString();
+    const newTodos = todos.map((todo, i) => {
+      if (i !== idx) return todo;
+      if (!todo.done) {
+        // Wird jetzt abgehakt: done true + doneAt setzen
+        return { ...todo, done: true, doneAt: now };
+      } else {
+        // Wird wieder offen: done false + doneAt entfernen
+        const t = { ...todo };
+        delete t.doneAt;
+        t.done = false;
+        return t;
+      }
+    });
     const newConfig = { ...config, todos: newTodos };
     setTodos(newTodos);
     setConfig(newConfig);
@@ -373,17 +386,26 @@ export default function App() {
             <div className="md:col-span-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>✅ To-dos</h2>
               <ul className="card text-base">
-                {todos.map((t, i) => (
-                  <li key={i} className="flex items-center gap-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={!!t.done}
-                      onChange={() => handleTodoToggle(i)}
-                      className="accent-green-600 w-5 h-5"
-                    />
-                    <span style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#888' : undefined }}>{typeof t === 'object' && t !== null ? t.text : t}</span>
-                  </li>
-                ))}
+                {todos
+                  .filter(t => {
+                    if (!t.done || !t.doneAt) return true;
+                    // Prüfe, ob erledigt vor mehr als 10 Tagen
+                    const doneDate = new Date(t.doneAt);
+                    const now = new Date();
+                    const diffDays = Math.floor((now - doneDate) / (1000 * 60 * 60 * 24));
+                    return diffDays <= 10;
+                  })
+                  .map((t, i) => (
+                    <li key={i} className="flex items-center gap-2 py-1">
+                      <input
+                        type="checkbox"
+                        checked={!!t.done}
+                        onChange={() => handleTodoToggle(i)}
+                        className="accent-green-600 w-5 h-5"
+                      />
+                      <span style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#888' : undefined }}>{typeof t === 'object' && t !== null ? t.text : t}</span>
+                    </li>
+                  ))}
               </ul>
             </div>
             <div className="md:col-span-1">
