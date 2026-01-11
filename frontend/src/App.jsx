@@ -323,11 +323,16 @@ export default function App() {
                                         const hour = startStr.substring(9, 11);
                                         const min = startStr.substring(11, 13);
                                         return <span className="ml-1 text-gray-500">{hour}:{min}</span>;
-                                      } else {
-                                        // Fallback: bisherige Logik
-                                        const dateObj = new Date(ev.start);
-                                        return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>;
+                                      } else if (/T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2})?$/.test(startStr)) {
+                                        // ISO-String mit Offset, z.B. 2026-01-07T20:00:00+01:00
+                                        const match = startStr.match(/T(\d{2}):(\d{2})/);
+                                        if (match) {
+                                          return <span className="ml-1 text-gray-500">{match[1]}:{match[2]}</span>;
+                                        }
                                       }
+                                      // Fallback: bisherige Logik
+                                      const dateObj = new Date(ev.start);
+                                      return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>;
                                     })()
                                   )}
                                 </div>
