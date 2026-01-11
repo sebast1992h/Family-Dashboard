@@ -96,6 +96,13 @@ app.get("/api/calendar", async (req, res) => {
         // Tag im Bereich der aktuellen Woche (Montag=0)
         const diff = Math.round((start - monday) / (1000*60*60*24));
         if (diff >= 0 && diff < 7) {
+          // Hilfsfunktion: Uhrzeit als HH:MM extrahieren (lokale Zeit des Date-Objekts)
+          function formatTime(d) {
+            if (!d) return null;
+            const h = String(d.getHours()).padStart(2, '0');
+            const m = String(d.getMinutes()).padStart(2, '0');
+            return h + ':' + m;
+          }
           // Versuche, den Termin einem Familienmitglied zuzuordnen
           let matched = false;
           if (typeof ev.summary === 'string') {
@@ -105,8 +112,8 @@ app.get("/api/calendar", async (req, res) => {
                 if (!days[diff][member]) days[diff][member] = [];
                 days[diff][member].push({
                   summary: ev.summary.slice(prefix.length),
-                  start: ev.start,
-                  end: ev.end,
+                  start: formatTime(ev.start),
+                  end: formatTime(ev.end),
                   location: ev.location || ""
                 });
                 matched = true;
@@ -118,8 +125,8 @@ app.get("/api/calendar", async (req, res) => {
             if (!days[diff]["Kalender"]) days[diff]["Kalender"] = [];
             days[diff]["Kalender"].push({
               summary: ev.summary,
-              start: ev.start,
-              end: ev.end,
+              start: formatTime(ev.start),
+              end: formatTime(ev.end),
               location: ev.location || ""
             });
           }

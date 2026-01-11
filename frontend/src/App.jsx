@@ -312,28 +312,7 @@ export default function App() {
                                   <span className="inline-block">📅</span>
                                   <span>{ev.summary}</span>
                                   {ev.start && (
-                                    (() => {
-                                      const startStr = typeof ev.start === 'string' ? ev.start : '';
-                                      if (startStr.endsWith('Z')) {
-                                        // UTC-Format: wie gehabt
-                                        const dateObj = new Date(ev.start);
-                                        return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' })}</span>;
-                                      } else if (/^\d{8}T\d{6}$/.test(startStr)) {
-                                        // Format: YYYYMMDDTHHMMSS (ohne Z, mit TZID)
-                                        const hour = startStr.substring(9, 11);
-                                        const min = startStr.substring(11, 13);
-                                        return <span className="ml-1 text-gray-500">{hour}:{min}</span>;
-                                      } else if (/T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2})?$/.test(startStr)) {
-                                        // ISO-String mit oder ohne Offset, z.B. 2026-01-07T20:00:00 oder 2026-01-07T20:00:00+01:00
-                                        const match = startStr.match(/T(\d{2}):(\d{2})/);
-                                        if (match) {
-                                          return <span className="ml-1 text-gray-500">{match[1]}:{match[2]}</span>;
-                                        }
-                                      }
-                                      // Fallback: bisherige Logik
-                                      const dateObj = new Date(ev.start);
-                                      return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>;
-                                    })()
+                                    <span className="ml-1 text-gray-500">{ev.start}</span>
                                   )}
                                 </div>
                               ))}
@@ -355,28 +334,7 @@ export default function App() {
                                 <span className="inline-block">📅</span>
                                 <span>{ev.summary}</span>
                                 {ev.start && (
-                                  (() => {
-                                    const startStr = typeof ev.start === 'string' ? ev.start : '';
-                                    if (startStr.endsWith('Z')) {
-                                      // UTC-Format: wie gehabt
-                                      const dateObj = new Date(ev.start);
-                                      return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Berlin' })}</span>;
-                                    } else if (/^\d{8}T\d{6}$/.test(startStr)) {
-                                      // Format: YYYYMMDDTHHMMSS (ohne Z, mit TZID)
-                                      const hour = startStr.substring(9, 11);
-                                      const min = startStr.substring(11, 13);
-                                      return <span className="ml-1 text-gray-500">{hour}:{min}</span>;
-                                    } else if (/T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2})?$/.test(startStr)) {
-                                      // ISO-String mit oder ohne Offset, z.B. 2026-01-07T20:00:00 oder 2026-01-07T20:00:00+01:00
-                                      const match = startStr.match(/T(\d{2}):(\d{2})/);
-                                      if (match) {
-                                        return <span className="ml-1 text-gray-500">{match[1]}:{match[2]}</span>;
-                                      }
-                                    }
-                                    // Fallback: bisherige Logik
-                                    const dateObj = new Date(ev.start);
-                                    return <span className="ml-1 text-gray-500">{dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>;
-                                  })()
+                                  <span className="ml-1 text-gray-500">{ev.start}</span>
                                 )}
                               </div>
                             ))}
