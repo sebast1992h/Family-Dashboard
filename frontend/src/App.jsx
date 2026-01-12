@@ -4,6 +4,24 @@ import ConfigPage from "./ConfigPage";
 import { fetchDashboardConfig, saveDashboardConfig, fetchIcalEvents } from "./api";
 import { fetchVersion } from "./versionApi";
 
+// Hook to detect mobile viewport using matchMedia
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
+    const handler = (e) => setIsMobile(e.matches);
+    if (mq.addEventListener) mq.addEventListener('change', handler);
+    else mq.addListener(handler);
+    setIsMobile(mq.matches);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', handler);
+      else mq.removeListener(handler);
+    };
+  }, [breakpoint]);
+  return isMobile;
+}
+
 function loadAuth() {
   return localStorage.getItem("dashboardAuth") === "1";
 }
@@ -45,6 +63,11 @@ export default function App() {
   const bannerInnerRef = useRef(null);
   const [bannerOverflowing, setBannerOverflowing] = useState(false);
   const [marqueeDuration, setMarqueeDuration] = useState(10);
+  // Weather state
+  const [weather, setWeather] = useState(null);
+  const [weatherError, setWeatherError] = useState(false);
+  // Mobile detection
+  const isMobile = useIsMobile(768);
   
   // Geburtstags-Newsbanner (berechnen, bevor Hooks später verwendet werden)
   let todaysBirthdays = [];
@@ -91,6 +114,32 @@ export default function App() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, [birthdayText, currentTimeStr]);
+
+  // Fetch weather (via backend proxy). Show nothing if error or missing data.
+  useEffect(() => {
+    let mounted = true;
+    async function loadWeather() {
+      try {
+        const res = await fetch('/api/weather');
+        if (!res.ok) {
+          if (mounted) { setWeather(null); setWeatherError(true); }
+          return;
+        }
+        const j = await res.json();
+        // provider may return error details inside 'provider'
+        if (j && typeof j.temp !== 'undefined' && j.temp !== null) {
+          if (mounted) { setWeather(j); setWeatherError(false); }
+        } else {
+          if (mounted) { setWeather(null); setWeatherError(false); }
+        }
+      } catch (e) {
+        if (mounted) { setWeather(null); setWeatherError(true); }
+      }
+    }
+    loadWeather();
+    const t = setInterval(loadWeather, 30 * 60 * 1000); // every 30 minutes
+    return () => { mounted = false; clearInterval(t); };
+  }, []);
 
   // Auto-resize für Notizen-Textarea
   useEffect(() => {
@@ -284,19 +333,32 @@ export default function App() {
             <span className="font-bold text-xl">Family Dashboard</span>
           </div>
 
-          <div className="flex-1 mx-4" style={{ minWidth: 0 }}>
-            <div ref={bannerOuterRef} className="w-full px-6 py-2 rounded text-lg font-medium overflow-hidden" style={{ background: 'var(--accent)', color: 'var(--bg-main)', whiteSpace: 'nowrap', position: 'relative', minWidth: 0, paddingRight: '12px', minHeight: '48px' }}>
+          {!isMobile && (
+            <div className="flex-1 mx-4" style={{ minWidth: 0 }}>
+              <div ref={bannerOuterRef} className="w-full px-6 py-2 rounded text-lg font-medium overflow-hidden" style={{ background: 'var(--accent)', color: 'var(--bg-main)', whiteSpace: 'nowrap', position: 'relative', minWidth: 0, paddingRight: '12px', minHeight: '48px' }}>
               <style>{"@keyframes marquee{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}"}</style>
               <div
                 ref={bannerInnerRef}
                 className="flex items-center gap-4"
                 style={bannerOverflowing ? { position: 'absolute', left: 0, top: 0, height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', animation: `${marqueeDuration}s linear infinite marquee` } : { display: 'inline-block', whiteSpace: 'nowrap' }}
               >
-                <div className="text-lg font-medium" style={{ display: 'inline-block', marginRight: '1rem' }}>Es ist {currentTimeStr} Uhr.</div>
-                <div style={{ display: 'inline-block', minWidth: '1px' }}>{birthdayText ? `🎉 Heute hat Geburtstag: ${birthdayText} 🎉` : ''}</div>
+                <div className="text-lg font-medium" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginRight: '1rem' }}>
+                  <span>Es ist {currentTimeStr} Uhr.</span>
+                  {weather && !weatherError && (
+                    <span style={{ marginLeft: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1 }}>
+                      {weather.icon ? (
+                        <img src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`} alt={weather.desc || 'Wetter'} style={{ height: 18, width: 18, display: 'inline-block', verticalAlign: 'middle' }} />
+                      ) : null}
+                      <span style={{ fontWeight: 600, lineHeight: 1 }}>{Math.round(weather.temp)}°C</span>
+                      <span style={{ color: 'rgba(0,0,0,0.7)', lineHeight: 1 }}>{weather.desc}</span>
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', minWidth: '1px' }}>{birthdayText ? `🎉 Heute hat Geburtstag: ${birthdayText} 🎉` : ''}</div>
+              </div>
               </div>
             </div>
-          </div>
+          )}
 
           <button className="px-4 py-2" style={{ flex: '0 0 auto', marginLeft: 12, zIndex: 60 }} onClick={() => setRoute("config")}>Konfiguration</button>
         </nav>

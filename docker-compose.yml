@@ -5,7 +5,10 @@ services:
       - "4000:4000"
     restart: unless-stopped
     environment:
-      - DATA_FILE=/app/data/dashboard-data.json
+      - DATA_FILE=${DATA_FILE:-/app/data/dashboard-data.json}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - WEATHER_LAT=${WEATHER_LAT:-53.921852}
+      - WEATHER_LON=${WEATHER_LON:-10.743604}
     volumes:
       - familydashboarddata:/app/data
 

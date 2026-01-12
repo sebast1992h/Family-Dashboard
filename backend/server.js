@@ -201,4 +201,55 @@ app.get('/api/calendar-inspect', async (req, res) => {
   }
 });
 
+// Simple weather proxy with in-memory caching
+const weatherCache = { ts: 0, data: null };
+const WEATHER_TTL = (process.env.WEATHER_CACHE_TTL_SECONDS ? parseInt(process.env.WEATHER_CACHE_TTL_SECONDS, 10) : 600) * 1000; // default 10min
+
+app.get('/api/weather', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (weatherCache.data && (now - weatherCache.ts) < WEATHER_TTL) {
+      return res.json({ cached: true, ...weatherCache.data });
+    }
+
+    const key = process.env.OPENWEATHER_API_KEY;
+    if (!key) return res.status(500).json({ error: 'No weather API key configured' });
+
+    const cfg = loadConfig();
+    const lat = (cfg && cfg.weatherLat) || process.env.WEATHER_LAT || '53.865';
+    const lon = (cfg && cfg.weatherLon) || process.env.WEATHER_LON || '10.686';
+    const units = 'metric';
+    const lang = 'de';
+
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=${units}&lang=${lang}&appid=${encodeURIComponent(key)}`;
+    const r = await fetch(url);
+    const respText = await r.text();
+    let body = null;
+    try { body = JSON.parse(respText); } catch (e) { body = respText; }
+    if (!r.ok) {
+      console.error('Weather provider returned non-OK', r.status, respText);
+      return res.status(502).json({ error: 'Weather provider error', status: r.status, provider: body });
+    }
+
+    const data = {
+      temp: body.main?.temp ?? null,
+      feels_like: body.main?.feels_like ?? null,
+      desc: body.weather && body.weather[0] && body.weather[0].description ? String(body.weather[0].description) : null,
+      icon: body.weather && body.weather[0] && body.weather[0].icon ? String(body.weather[0].icon) : null,
+      city: body.name || null,
+      humidity: body.main?.humidity ?? null,
+      wind_speed: body.wind?.speed ?? null,
+      raw: body
+    };
+
+    weatherCache.ts = now;
+    weatherCache.data = data;
+
+    res.json({ cached: false, ...data });
+  } catch (e) {
+    console.error('Error in /api/weather', e && e.stack || e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(4000, () => console.log('Backend läuft auf Port 4000'));
