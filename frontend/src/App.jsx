@@ -30,7 +30,67 @@ export default function App() {
   const notesSaveTimeout = useRef(null);
   const notesRef = useRef(null);
 
-  // Time rendering removed — calendar shows only event summaries (no times)
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    // update clock every minute (keeps hh:mm current)
+    const tick = () => setCurrentTime(new Date());
+    const id = setInterval(tick, 60 * 1000);
+    // set immediately
+    tick();
+    return () => clearInterval(id);
+  }, []);
+
+  // Banner overflow handling for marquee scrolling
+  const bannerOuterRef = useRef(null);
+  const bannerInnerRef = useRef(null);
+  const [bannerOverflowing, setBannerOverflowing] = useState(false);
+  const [marqueeDuration, setMarqueeDuration] = useState(10);
+  
+  // Geburtstags-Newsbanner (berechnen, bevor Hooks später verwendet werden)
+  let todaysBirthdays = [];
+  if (config && config.birthdays && Array.isArray(config.birthdays)) {
+    const today = new Date();
+    const todayStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+    todaysBirthdays = config.birthdays.filter(b => {
+      if (!b.date) return false;
+      const [, month, day] = b.date.split('-');
+      return (month + '-' + day) === todayStr;
+    });
+  }
+
+  const birthdayText = todaysBirthdays.length > 0 ? todaysBirthdays.map(b => {
+    if (!b.date) return b.name;
+    const birthYear = parseInt(b.date.split('-')[0], 10);
+    const today = new Date();
+    let age = today.getFullYear() - birthYear;
+    const month = parseInt(b.date.split('-')[1], 10);
+    const day = parseInt(b.date.split('-')[2], 10);
+    if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) {
+      age--;
+    }
+    return `${b.name} (${age})`;
+  }).join(', ') : null;
+
+  const currentTimeStr = currentTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false });
+  // Banner overflow detection: placed before any early return so Hooks order is stable
+  useEffect(() => {
+    function check() {
+      const outer = bannerOuterRef.current;
+      const inner = bannerInnerRef.current;
+      if (!outer || !inner) return;
+      const overflowing = inner.scrollWidth > outer.clientWidth;
+      setBannerOverflowing(overflowing);
+      if (overflowing) {
+        const ratio = inner.scrollWidth / outer.clientWidth;
+        // slower scroll: increase multiplier and minimum duration
+        const duration = Math.max(10, Math.round(ratio * 12));
+        setMarqueeDuration(duration);
+      }
+    }
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [birthdayText, currentTimeStr]);
 
   // Auto-resize für Notizen-Textarea
   useEffect(() => {
@@ -182,6 +242,14 @@ export default function App() {
     return <ConfigPage key={isAuthenticated ? "auth" : "noauth"} onSave={handleSave} config={config} isAuthenticated={isAuthenticated} onLogin={handleLogin} onBack={() => setRoute("dashboard")} />;
   }
 
+  
+
+  // Aktueller Wochentag-Index (0=Mo, 1=Di, ..., 6=So)
+  const todayDayIdx = (() => {
+    const dayOfWeek = new Date().getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  })();
+
   async function handleTodoToggle(idx) {
     const now = new Date().toISOString();
     const newTodos = todos.map((todo, i) => {
@@ -206,56 +274,33 @@ export default function App() {
       setError("Fehler beim Speichern der To-dos");
     }
   }
-
-  // Geburtstags-Newsbanner
-  let todaysBirthdays = [];
-  if (config && config.birthdays && Array.isArray(config.birthdays)) {
-    const today = new Date();
-    const todayStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
-    todaysBirthdays = config.birthdays.filter(b => {
-      if (!b.date) return false;
-      // b.date im Format YYYY-MM-DD
-      const [, month, day] = b.date.split('-');
-      return (month + '-' + day) === todayStr;
-    });
-  }
-
-  // Aktueller Wochentag-Index (0=Mo, 1=Di, ..., 6=So)
-  const todayDayIdx = (() => {
-    const dayOfWeek = new Date().getDay();
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  })();
+  
 
   return (
     <>
       <div className="min-h-screen" style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}>
-        <nav className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center p-4 shadow" style={{ background: 'var(--accent2)', color: 'var(--accent)' }}>
+        <nav className="flex items-center p-4 shadow" style={{ background: 'var(--accent2)', color: 'var(--accent)' }}>
           <div className="flex items-center gap-4">
             <span className="font-bold text-xl">Family Dashboard</span>
-            {todaysBirthdays.length > 0 && (
-              <div className="ml-4 px-8 py-3 rounded text-lg font-medium" style={{ background: 'var(--accent)', color: 'var(--bg-main)' }}>
-                🎉 Heute hat Geburtstag: {todaysBirthdays.map(b => {
-                  // Alter berechnen
-                  if (!b.date) return b.name;
-                  const birthYear = parseInt(b.date.split('-')[0], 10);
-                  const today = new Date();
-                  let age = today.getFullYear() - birthYear;
-                  // Falls Geburtstag dieses Jahr noch nicht war, ein Jahr abziehen
-                  const month = parseInt(b.date.split('-')[1], 10);
-                  const day = parseInt(b.date.split('-')[2], 10);
-                  if (
-                    today.getMonth() + 1 < month ||
-                    (today.getMonth() + 1 === month && today.getDate() < day)
-                  ) {
-                    age--;
-                  }
-                  return `${b.name} (${age})`;
-                }).join(', ')} 🎉
-              </div>
-            )}
           </div>
-          <button className="px-4 py-2" onClick={() => setRoute("config")}>Konfiguration</button>
+
+          <div className="flex-1 mx-4" style={{ minWidth: 0 }}>
+            <div ref={bannerOuterRef} className="w-full px-6 py-2 rounded text-lg font-medium overflow-hidden" style={{ background: 'var(--accent)', color: 'var(--bg-main)', whiteSpace: 'nowrap', position: 'relative', minWidth: 0, paddingRight: '12px', minHeight: '48px' }}>
+              <style>{"@keyframes marquee{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}"}</style>
+              <div
+                ref={bannerInnerRef}
+                className="flex items-center gap-4"
+                style={bannerOverflowing ? { position: 'absolute', left: 0, top: 0, height: '100%', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', animation: `${marqueeDuration}s linear infinite marquee` } : { display: 'inline-block', whiteSpace: 'nowrap' }}
+              >
+                <div className="text-lg font-medium" style={{ display: 'inline-block', marginRight: '1rem' }}>Es ist {currentTimeStr} Uhr.</div>
+                <div style={{ display: 'inline-block', minWidth: '1px' }}>{birthdayText ? `🎉 Heute hat Geburtstag: ${birthdayText} 🎉` : ''}</div>
+              </div>
+            </div>
+          </div>
+
+          <button className="px-4 py-2" style={{ flex: '0 0 auto', marginLeft: 12, zIndex: 60 }} onClick={() => setRoute("config")}>Konfiguration</button>
         </nav>
+
         <div className="p-4">
           <div>
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>🗓 Termine</h2>

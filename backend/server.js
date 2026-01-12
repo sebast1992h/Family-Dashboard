@@ -26,6 +26,17 @@ function saveConfig(cfg) {
 app.get("/api/config", (req, res) => res.json(loadConfig()));
 app.post("/api/config", (req, res) => { saveConfig(req.body); res.json({ success: true }); });
 
+// API für Version (liefert Inhalt von version.txt)
+app.get("/api/version", (req, res) => {
+  try {
+    const versionPath = path.join(process.cwd(), "version.txt");
+    const version = fs.readFileSync(versionPath, "utf-8").trim();
+    res.json({ version });
+  } catch (e) {
+    res.json({ version: "unbekannt" });
+  }
+});
+
 // Return weekly buckets with events that include only summary and location
 app.get("/api/calendar", async (req, res) => {
   try {
