@@ -487,10 +487,10 @@ export default function App() {
               </table>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>🍽 Essensplan</h2>
-              <div className="overflow-x-auto card">
+              <div className="overflow-x-auto card h-full">
                 <table className="min-w-full border text-base">
                   <thead>
                     <tr>
@@ -523,42 +523,45 @@ export default function App() {
                 </table>
               </div>
             </div>
-            <div className="md:col-span-1">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>✅ To-dos</h2>
-              <ul className="card text-base">
-                {todos
-                  .filter(t => {
-                    if (!t.done || !t.doneAt) return true;
-                    // Prüfe, ob erledigt vor mehr als 10 Tagen
-                    const doneDate = new Date(t.doneAt);
-                    const now = new Date();
-                    const diffDays = Math.floor((now - doneDate) / (1000 * 60 * 60 * 24));
-                    return diffDays <= 10;
-                  })
-                  .map((t, i) => (
-                    <li key={i} className="flex items-center gap-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={!!t.done}
-                        onChange={() => handleTodoToggle(i)}
-                        className="accent-green-600 w-5 h-5"
-                      />
-                      <span style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#888' : undefined }}>{typeof t === 'object' && t !== null ? t.text : t}</span>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-            <div className="md:col-span-1">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>📝 Notizen</h2>
-              <textarea
-                ref={notesRef}
-                className="w-full card p-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden"
-                placeholder="Notizen hier eingeben..."
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                style={{ minHeight: 120, maxHeight: '60vh', background: 'var(--bg-main)', color: 'var(--text-main)' }}
-              />
-              <div className="text-xs text-gray-400 mt-1">Wird automatisch gespeichert</div>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 md:pr-2">
+                <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>✅ To-dos</h2>
+                <ul className="card text-base h-full overflow-auto p-2">
+                  {todos
+                    .filter(t => {
+                      if (!t.done || !t.doneAt) return true;
+                      const doneDate = new Date(t.doneAt);
+                      const now = new Date();
+                      const diffDays = Math.floor((now - doneDate) / (1000 * 60 * 60 * 24));
+                      return diffDays <= 10;
+                    })
+                    .map((t, i) => (
+                      <li key={i} className="flex items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={!!t.done}
+                          onChange={() => handleTodoToggle(i)}
+                          className="accent-green-600 w-5 h-5"
+                        />
+                        <span style={{ textDecoration: t.done ? 'line-through' : 'none', color: t.done ? '#888' : undefined }}>{typeof t === 'object' && t !== null ? t.text : t}</span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+
+              <div className="flex-1 md:pl-2">
+                <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--accent)' }}>📝 Notizen</h2>
+                <textarea
+                  ref={notesRef}
+                  className="w-full card p-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden h-full"
+                  placeholder="Notizen hier eingeben..."
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  style={{ minHeight: 120, background: 'var(--bg-main)', color: 'var(--text-main)' }}
+                />
+                <div className="text-xs text-gray-400 mt-1">Wird automatisch gespeichert</div>
+              </div>
             </div>
           </div>
         </div>
